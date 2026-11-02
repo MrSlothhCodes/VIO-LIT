@@ -1,7 +1,10 @@
 # Camera ORB
 
 A small Rust project that opens the default webcam and overlays ORB (Oriented FAST and Rotated BRIEF) keypoints in real time.
-
+# To do
+Integrate IMU
+Kalman Filter
+Micro Ros for Comms
 ## Overview
 
 This project demonstrates:
