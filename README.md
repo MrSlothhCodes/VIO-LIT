@@ -1,13 +1,18 @@
-# Camera ORB
+# VIO-Lite 
 
-A small Rust project that opens the default webcam and overlays ORB (Oriented FAST and Rotated BRIEF) keypoints in real time.
+A Lite-Weight Rust project that opens the default webcam and overlays ORB (Oriented FAST and Rotated BRIEF) keypoints in real time, designed to be run on systems like Raspeberry PI
 # To do
--Integrate IMU
+-Integrate IMU- Done
 
--Kalman Filter
-
+-Kalman Filter- Done [MSCKF used]
+-Error Correction
+-Tuning
 -Micro Ros for Comms
 ## Overview
+
+##
+
+
 
 This project demonstrates:
 
@@ -16,6 +21,7 @@ This project demonstrates:
 - detecting ORB features
 - drawing detected keypoints back onto the live image
 - displaying the result in a window
+- Trajectory and Pose 
 
 It is a lightweight example for learning OpenCV + Rust integration and computer vision feature detection.
 
