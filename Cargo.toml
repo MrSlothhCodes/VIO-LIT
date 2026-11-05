@@ -4,4 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ferromotion-control = "0.72"
+nalgebra = "0.35.0"
 opencv = { version = "0.92", features = ["clang-runtime"] }
+serialport = "4.10.1"
