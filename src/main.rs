@@ -119,7 +119,7 @@ fn main() -> opencv::Result<()> {
     // ---- IMU in background ----
     let (tx, rx) = mpsc::channel::<ImuSample>();
     let port = std::env::var("IMU_PORT")
-        .unwrap_or_else(|_| "/dev/cu.usbmodem1401".to_string());
+        .unwrap_or_else(|_| "/dev/cu.usbmodem1101".to_string());
     thread::Builder::new()
         .name("serial_imu".into())
         .spawn(move || read_serial_loop(&port, tx))
@@ -210,8 +210,10 @@ fn main() -> opencv::Result<()> {
             for kp in keypoints.iter() {
                 prev_pts.push(kp.pt());
             }
-        } else {
-            // Optical flow
+        } 
+        
+        else {
+            // --- OPTICAL FLOW TRACKING ---
             let mut status = core::Vector::<u8>::new();
             let mut err = core::Vector::<f32>::new();
             let mut next_pts = prev_pts.clone();
@@ -238,7 +240,7 @@ fn main() -> opencv::Result<()> {
                 }
             }
 
-            // Relative pose
+            // --- RELATIVE POSE ESTIMATION ---
             if good_prev.len() >= 8 {
                 let mut mask = core::Mat::default();
                 let mut r = core::Mat::default();
@@ -255,23 +257,29 @@ fn main() -> opencv::Result<()> {
                     &mut mask,
                 )?;
 
-                if inliers as usize >= 8 {
-                    // Sanity check: recompute optical-flow (recoverPose requires input/output semantics
-                    // in some OpenCV versions; the returned good_next may have been filtered to inliers).
-                    // Here we trust recover_pose's inliers count and the (r, t) matrices.
+                // --- MOTION GATES ---
+                // 1. Require enough inliers to trust the pose
+                if inliers as usize >= 15 {
                     let r_mat = mat3_from_cv(&r)?;
                     let t_vec = vec3_from_cv(&t)?;
-
-                    // t is unit-norm in monocular VO.
+                    
+                    // 2. Check translation magnitude (t is unit norm in monocular VO)
+                    // We only integrate if the movement is non-trivial.
+                    // Adjust '0.05' based on your camera's speed.
                     let t_norm = t_vec.norm();
-                    if t_norm.is_finite() && t_norm > 1e-6 {
-                        // Compose relative motion into absolute pose.
+                    
+                    // 3. Check rotation angle
+                    let rot_mat = Rotation3::from_matrix_unchecked(r_mat);
+                    let angle = rot_mat.angle();
+
+                    // Only update if motion is realistic (not pure noise)
+                    if t_norm > 1e-6 && angle < 0.5 { // ~28 degrees max per frame
                         let rel = Isometry3::from_parts(
                             Translation3::from(t_vec),
-                            UnitQuaternion::from_rotation_matrix(
-                                &Rotation3::from_matrix_unchecked(r_mat),
-                            ),
+                            UnitQuaternion::from_rotation_matrix(&rot_mat),
                         );
+                        
+                        // Apply the pose
                         pose_world_cam = pose_world_cam * rel;
 
                         // Update path only when moved enough
@@ -283,7 +291,7 @@ fn main() -> opencv::Result<()> {
                 }
             }
 
-            // Draw tracked points on the frame
+            // Draw tracked points
             for p in good_next.iter() {
                 imgproc::circle(
                     &mut frame,

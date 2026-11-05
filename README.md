@@ -3,7 +3,6 @@
 A Lite-Weight Rust project that opens the default webcam and overlays ORB (Oriented FAST and Rotated BRIEF) keypoints in real time, designed to be run on systems like Raspeberry PI
 # To do
 -Integrate IMU- Done
-
 -Kalman Filter- Done [MSCKF used]
 -Error Correction
 -Tuning
